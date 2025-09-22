@@ -101,22 +101,12 @@ void ChartGenerator::drawGrid() {
 }
 
 void ChartGenerator::drawAxes() {
-    // X轴：如果0在范围内，绘制在0，否则绘制在底部边界
-    int x_axis_y;
-    if (0 >= data_min_y && 0 <= data_max_y) {
-        x_axis_y = dataToPixelY(0);
-    } else {
-        x_axis_y = plot_y2; // 底部边界
-    }
+    // X轴始终绘制在底部边界
+    int x_axis_y = plot_y2;
     drawLine(plot_x1, x_axis_y, plot_x2, x_axis_y, config.axis_color, config.axis_width);
 
-    // Y轴：如果0在范围内，绘制在0，否则绘制在左侧边界
-    int y_axis_x;
-    if (0 >= data_min_x && 0 <= data_max_x) {
-        y_axis_x = dataToPixelX(0);
-    } else {
-        y_axis_x = plot_x1; // 左侧边界
-    }
+    // Y轴始终绘制在左侧边界
+    int y_axis_x = plot_x1;
     drawLine(y_axis_x, plot_y1, y_axis_x, plot_y2, config.axis_color, config.axis_width);
 }
 
@@ -139,15 +129,15 @@ void ChartGenerator::drawTickMarks() {
     auto x_ticks = calculateTicks(data_min_x, data_max_x, true);
     auto y_ticks = calculateTicks(data_min_y, data_max_y, false);
 
-    // X轴刻度
-    int x_axis_y = dataToPixelY(0);
+    // X轴刻度（始终在底部边界）
+    int x_axis_y = plot_y2;
     for (double tick : x_ticks) {
         int x = dataToPixelX(tick);
         if (x >= plot_x1 && x <= plot_x2) {
             // 刻度线
             drawLine(x, x_axis_y - 5, x, x_axis_y + 5, config.axis_color, 1);
 
-            // 刻度文本
+            // 刻度文本（下方，居中）
             std::string label = formatTickLabel(tick);
             int label_x = x - (int)label.size() * 4;
             int label_y = x_axis_y + 10;
@@ -155,17 +145,17 @@ void ChartGenerator::drawTickMarks() {
         }
     }
 
-    // Y轴刻度
-    int y_axis_x = dataToPixelX(0);
+    // Y轴刻度（始终在左侧边界）
+    int y_axis_x = plot_x1;
     for (double tick : y_ticks) {
         int y = dataToPixelY(tick);
         if (y >= plot_y1 && y <= plot_y2) {
             // 刻度线
             drawLine(y_axis_x - 5, y, y_axis_x + 5, y, config.axis_color, 1);
 
-            // 刻度文本
+            // 刻度文本（左侧，右对齐）
             std::string label = formatTickLabel(tick);
-            int label_x = y_axis_x - (int)label.size() * 8 - 8;
+            int label_x = y_axis_x - (int)label.size() * 8 - 10;
             int label_y = y - 4;
             drawText(label_x, label_y, label, config.axis_color);
         }
