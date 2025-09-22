@@ -22,29 +22,35 @@ bool ChartGenerator::generateScatterPlot(
     const std::string& y_label,
     const std::string& title,
     const std::string& filename) {
-    
+
     if (x_data.size() != y_data.size() || x_data.empty()) {
         return false;
     }
-    
+
     // 计算数据范围
     calculateDataRange(x_data, y_data);
-    
+
     // 初始化绘图区域
     initializePlotArea();
-    
+
     // 绘制各个组件
     drawBackground();
     if (config.show_grid) {
         drawGrid();
     }
     drawAxes();
+
+    // 绘制所有直线
+    for (const auto& param : line_funcs) {
+        drawLineFunc(param.k, param.b, param.color, param.width, param.style);
+    }
+
     drawPoints(x_data, y_data);
     drawTickMarks();
     drawLabels(x_label, y_label, title);
-    
+
     // 保存为PNG
-    return stbi_write_png(filename.c_str(), config.width, config.height, 3, 
+    return stbi_write_png(filename.c_str(), config.width, config.height, 3,
                          pixels.data(), config.width * 3);
 }
 
@@ -276,6 +282,52 @@ void ChartGenerator::drawCircle(int center_x, int center_y, int radius, const RG
         if (2*(err - x) + 1 > 0) {
             x -= 1;
             err += 1 - 2*x;
+        }
+    }
+}
+
+// 绘制 y = kx + b 的直线，线型可选
+void ChartGenerator::drawLineFunc(double k, double b, const RGBColor& color, int width, LineStyle style) {
+    // 计算有效范围内的两个端点
+    double x1 = data_min_x;
+    double y1 = k * x1 + b;
+    double x2 = data_max_x;
+    double y2 = k * x2 + b;
+
+    int px1 = dataToPixelX(x1);
+    int py1 = dataToPixelY(y1);
+    int px2 = dataToPixelX(x2);
+    int py2 = dataToPixelY(y2);
+
+    if (style == Solid) {
+        drawLine(px1, py1, px2, py2, color, width);
+    } else {
+        int dx = abs(px2 - px1), dy = abs(py2 - py1);
+        int sx = (px1 < px2) ? 1 : -1;
+        int sy = (py1 < py2) ? 1 : -1;
+        int err = dx - dy;
+        int x = px1, y = py1;
+        int step = 0;
+        while (true) {
+            bool draw = false;
+            if (style == Dotted) {
+                draw = (step % 4 == 0);
+            } else if (style == Dashed) {
+                draw = ((step % 12) < 6);
+            }
+            if (draw) {
+                // 画宽度
+                for (int i = -width/2; i <= width/2; ++i) {
+                    for (int j = -width/2; j <= width/2; ++j) {
+                        setPixel(x + i, y + j, color);
+                    }
+                }
+            }
+            if (x == px2 && y == py2) break;
+            int e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; x += sx; }
+            if (e2 < dx)  { err += dx; y += sy; }
+            ++step;
         }
     }
 }

@@ -38,6 +38,18 @@ struct ChartConfig {
     int grid_step_y = 0;     // 网格Y步长（0表示自动）
 };
 
+enum LineStyle {
+    Solid,   // 实线
+    Dotted,  // 点线
+    Dashed   // 段线
+};
+
+struct LineFuncParam {
+    double k, b;
+    RGBColor color;
+    int width;
+    LineStyle style;
+};
 class ChartGenerator {
 private:
     ChartConfig config;
@@ -50,6 +62,8 @@ private:
     // 数据范围
     double data_min_x, data_max_x, data_min_y, data_max_y;
     
+    std::vector<LineFuncParam> line_funcs; // 新增
+    
 public:
     ChartGenerator(const ChartConfig& cfg = ChartConfig());
     
@@ -61,6 +75,12 @@ public:
         const std::string& y_label,
         const std::string& title,
         const std::string& filename);
+
+    void addLineFunc(double k, double b, const RGBColor& color, int width, LineStyle style) {
+        line_funcs.push_back({k, b, color, width, style});
+    }
+
+    void drawLineFunc(double k, double b, const RGBColor& color, int width, LineStyle style);
     
 private:
     void initializePlotArea();
@@ -70,9 +90,9 @@ private:
     void drawAxes();
     void drawPoints(const std::vector<float>& x_data, const std::vector<float>& y_data);
     void drawLabels(const std::string& x_label, const std::string& y_label, const std::string& title);
-    void drawTickMarks();void drawChar(int x, int y, char c, const RGBColor& color);
+    void drawTickMarks();
+    void drawChar(int x, int y, char c, const RGBColor& color);
     void drawText(int x, int y, const std::string& text, const RGBColor& color);
-
     
     // 坐标转换
     int dataToPixelX(double x);
